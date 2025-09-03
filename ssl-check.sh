@@ -8,6 +8,7 @@ MAILHOST="smtp.example.com"
 MAILPORT="25"
 MAILSUBJECT="SSL Certificate Expiration"
 LOGFILE="sslchecker.log"
+MSMTPOPTS="--tls=on --tls-starttls=on --tls-certcheck=off --host=$MAILHOST --port=$MAILPORT --from=$MAILFROM $MAILTO"
 # -------------------------------------------------
 
 # Start Log File
@@ -33,8 +34,9 @@ tail -n +2 "$CSV" | grep -v ^\# | while IFS=',' read -r HOST PORT DAYS COMMENT; 
 
     # Failboat
     if [[ -z "$EXPIRES" ]]; then
-        echo "FAILED: to retrieve certificate for $HOST:$PORT $COMMENT." >> $LOGFILE
-        echo -e "To: $MAILTO\nSubject: $MAILSUBJECT for $HOST\n\nFAILED: to retrieve certificate for $HOST:$PORT $COMMENT." | msmtp --tls=on --tls-starttls=on --tls-certcheck=off --host=$MAILHOST --port=$MAILPORT --from=$MAILFROM $MAILTO
+	FMESSAGE="FAILED: to retrieve certificate for $HOST:$PORT $COMMENT."
+        echo $MESSAGE >> $LOGFILE
+        echo -e "To: $MAILTO\nSubject: $MAILSUBJECT for $HOST\n\n$FMESSAGE" | msmtp $MSMTPOPTS
         echo "" >> $LOGFILE
         continue
     fi
@@ -42,13 +44,16 @@ tail -n +2 "$CSV" | grep -v ^\# | while IFS=',' read -r HOST PORT DAYS COMMENT; 
     # Convert date to epoch
     EXPIRESEPOCH=$(date -d "$EXPIRES" +%s)
     NOWEPOCH=$(date -d "$NOW" +%s)
+
     DAYSREMAIN=$(( (EXPIRESEPOCH - NOWEPOCH) / 86400 ))
+    MESSAGE="$HOST:$PORT $COMMENT expires on $EXPIRES ($DAYSREMAIN days left)."
 
     if (( DAYSREMAIN <= DAYS )); then
-        echo -e "To: $MAILTO\nSubject: $MAILSUBJECT for $HOST\n\nALERT: $HOST:$PORT $COMMENT expires on $EXPIRES ($DAYSREMAIN days left)." | msmtp --tls=on --tls-starttls=on --tls-certcheck=off --host=$MAILHOST --port=$MAILPORT --from=$MAILFROM $MAILTO
-        echo "ALERT: $HOST:$PORT $COMMENT expires on $EXPIRES ($DAYSREMAIN days left)" >> $LOGFILE
+	AMESSAGE="ALERT: $MESSAGE $HOST:$PORT $COMMENT expires on $EXPIRES ($DAYSREMAIN days left)."
+        echo -e "To: $MAILTO\nSubject: $MAILSUBJECT for $HOST\n\n$AMESSAGE" | msmtp $MSMTPOPTS
+        echo $AMESSAGE >> $LOGFILE
     else
-        echo "$HOST:$PORT $COMMENT expires on $EXPIRES ($DAYSREMAIN days left)" >> $LOGFILE
+        echo $MESSAGE >> $LOGFILE
     fi
 
     echo "" >> $LOGFILE
