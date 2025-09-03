@@ -23,7 +23,7 @@ for cmd in openssl date msmtp; do
 done
 
 # Read CSV file
-tail -n +2 "$CSV" | while IFS=',' read -r HOST PORT DAYS COMMENT; do
+tail -n +2 "$CSV" | grep -v ^\# | while IFS=',' read -r HOST PORT DAYS COMMENT; do
     echo "Checking $HOST on port $PORT..." >> $LOGFILE
 
     # Get the expiration date using OpenSSL
