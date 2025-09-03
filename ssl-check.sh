@@ -28,7 +28,7 @@ tail -n +2 "$CSV" | grep -v ^\# | while IFS=',' read -r HOST PORT DAYS COMMENT; 
 
     # Get the expiration date using OpenSSL
     EXPIRES=$(echo | openssl s_client -servername "$HOST" -connect "$HOST:$PORT" 2>/dev/null \
-        | openssl x509 -noout -enddate \
+        | openssl x509 -noout -enddate 2>/dev/null \
         | cut -d= -f2)
 
     # Failboat
