@@ -35,7 +35,7 @@ tail -n +2 "$CSV" | grep -v ^\# | while IFS=',' read -r HOST PORT DAYS COMMENT; 
     # Failboat
     if [[ -z "$EXPIRES" ]]; then
 	FMESSAGE="FAILED: to retrieve certificate for $HOST:$PORT $COMMENT."
-        echo $MESSAGE >> $LOGFILE
+        echo $FMESSAGE >> $LOGFILE
         echo -e "To: $MAILTO\nSubject: $MAILSUBJECT for $HOST\n\n$FMESSAGE" | msmtp $MSMTPOPTS
         echo "" >> $LOGFILE
         continue
